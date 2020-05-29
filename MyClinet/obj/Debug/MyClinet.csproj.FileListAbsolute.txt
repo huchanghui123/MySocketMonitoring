@@ -1,10 +1,12 @@
+E:\Visual Studio\C#\Socket监视器\MyClinet\obj\Debug\MyClinet.csproj.CoreCompileInputs.cache
 E:\Visual Studio\C#\Socket监视器\MyClinet\bin\Debug\MyClinet.exe
 E:\Visual Studio\C#\Socket监视器\MyClinet\bin\Debug\MyClinet.pdb
 E:\Visual Studio\C#\Socket监视器\MyClinet\bin\Debug\SuperSocket.ClientEngine.dll
 E:\Visual Studio\C#\Socket监视器\MyClinet\bin\Debug\SuperSocket.ProtoBase.dll
+E:\Visual Studio\C#\Socket监视器\MyClinet\bin\Debug\System.Threading.dll
 E:\Visual Studio\C#\Socket监视器\MyClinet\bin\Debug\SuperSocket.ProtoBase.xml
-E:\Visual Studio\C#\Socket监视器\MyClinet\obj\Debug\MyClinet.csprojAssemblyReference.cache
-E:\Visual Studio\C#\Socket监视器\MyClinet\obj\Debug\MyClinet.csproj.CoreCompileInputs.cache
+E:\Visual Studio\C#\Socket监视器\MyClinet\bin\Debug\System.Threading.xml
 E:\Visual Studio\C#\Socket监视器\MyClinet\obj\Debug\MyClinet.csproj.CopyComplete
 E:\Visual Studio\C#\Socket监视器\MyClinet\obj\Debug\MyClinet.exe
 E:\Visual Studio\C#\Socket监视器\MyClinet\obj\Debug\MyClinet.pdb
+E:\Visual Studio\C#\Socket监视器\MyClinet\obj\Debug\MyClinet.csprojAssemblyReference.cache
