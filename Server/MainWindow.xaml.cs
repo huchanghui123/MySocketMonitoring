@@ -49,13 +49,15 @@ namespace Server
             Button btn = (Button)sender;
             Console.WriteLine("Button_Click name:" + btn.Name);
             var sb = sessionList.Find((SessionButton s) => s.name.Equals(btn.Name));
-            var info = String.Format("Click-----name:{0} ip:{1} port:{2} ssesionID:{3}", sb.name,
-                (sb.session.RemoteEndPoint as IPEndPoint).Address,
-                (sb.session.RemoteEndPoint as IPEndPoint).Port,
-                sb.session.SessionID);
-            clinet_info.Text = info;
+            var session = appServer.GetSessionByID(sb.sessionid);
+            Console.WriteLine("Click--------------"+ (session.RemoteEndPoint as IPEndPoint).Address+"-----"
+                + (session.RemoteEndPoint as IPEndPoint).Port);
+            var info = String.Format("Click-----name:{0} ip:{1} port:{2}", sb.name,
+                (session.RemoteEndPoint as IPEndPoint).Address,
+                (session.RemoteEndPoint as IPEndPoint).Port);
+            clinet_name.Text = info;
+            clinet_info.Text = "SessionID:"+session.SessionID;
         }
-
 
         private void StartServer()
         {
@@ -79,8 +81,7 @@ namespace Server
 
         private void NewRequestReceived(MySession session, StringRequestInfo requestInfo)
         {
-            //throw new NotImplementedException();
-            Console.WriteLine("NewRequestReceived...." + requestInfo.Body + "----" + requestInfo.Body);
+            Console.WriteLine("NewRequestReceived:" + requestInfo.Key + "----" + requestInfo.Body);
         }
 
         private void NewSessionConnected(MySession session)
@@ -88,8 +89,9 @@ namespace Server
             IPAddress clientIp = (session.RemoteEndPoint as IPEndPoint).Address;
             int clientPort = (session.RemoteEndPoint as IPEndPoint).Port;
 
-            String message = String.Format("Welcome to SuperSocket Telnet Server!! client IP:{0} Port:{1} ID:{2}",
+            String message = String.Format("Welcome to SuperSocket Telnet Server!! client IP:{0} Port:{1} ID:{2}###",
                 clientIp, clientPort, session.SessionID);
+            Console.WriteLine(message);
             session.Send(message);
 
             UpdateSeesionList(clientConn, session, "Connected");
@@ -103,8 +105,9 @@ namespace Server
             IPAddress clientIp = (session.RemoteEndPoint as IPEndPoint).Address;
             int clientPort = (session.RemoteEndPoint as IPEndPoint).Port;
 
-            Console.WriteLine("Client:{0} {1} session:{2} is closed for {3} connect number:{4}",
+            String message = String.Format("Client:{0} {1} session:{2} is closed for {3} connect number:{4}",
                 clientIp, clientPort, session.SessionID, value, clientConn);
+            Console.WriteLine(message);
 
             UpdateSeesionList(clientConn, session, "Closed");
             UpdateConnect(clientConn, session, "Closed");
@@ -112,6 +115,7 @@ namespace Server
 
         public void UpdateSeesionList(int index, MySession session, string status)
         {
+            Console.WriteLine("UpdateSeesionList.......index:" + index + " status:"+ status);
             sb = new SessionButton();
             if (status.Equals("Connected"))
             {
@@ -131,14 +135,14 @@ namespace Server
                     btnList[sb.index].Background = Brushes.Green;
                     btnList[sb.index].IsEnabled = true;
                 }));
-                sb.session = session;
+                sb.sessionid = session.SessionID;
                 sessionList.Add(sb);
             }
             else if (status.Equals("Closed"))
             {
-                var sb = sessionList.Find((SessionButton s) => s.session.SessionID.Equals(session.SessionID));
+                var sb = sessionList.Find((SessionButton s) => s.sessionid.Equals(session.SessionID));
                 Console.WriteLine("name:{0} id:{1} port:{2} seesionId:{3}", sb.name, sb.index,
-                    (sb.session.RemoteEndPoint as IPEndPoint).Port, sb.session.SessionID);
+                    (session.RemoteEndPoint as IPEndPoint).Port, session.SessionID);
                 disconnectList.Add(sb.index);
                 sessionList.Remove(sb);
                 this.Dispatcher.Invoke(new Action(() =>
@@ -147,7 +151,11 @@ namespace Server
                     btnList[sb.index].IsEnabled = false;
                 }));
             }
-
+            disconnectList.Sort();
+            foreach (int i in disconnectList)
+            {
+                Console.WriteLine("foreach disconnectList:" + i);
+            }
         }
 
         public void UpdateConnect(int conn, MySession session, string status)
