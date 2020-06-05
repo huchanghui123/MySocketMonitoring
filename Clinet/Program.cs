@@ -8,32 +8,69 @@ namespace Clinet
     class Program
     {
         static string endfilter = "###";
-        static CpuTemperatureReader cpuReader;
-        static HardwareSensors hs;
 
+        static MyClient client;
         static void Main(string[] args)
         {
+            SetConsoleCtrlHandler(cancelHandler, true);
+            //Console.CancelKeyPress += Console_CancelKeyPress;
+            AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             Console.WriteLine("start client!");
 
-            MyClient client = new MyClient(endfilter);
+            client = new MyClient(endfilter);
             client.ConnectToServer("127.0.0.1",2020);
 
-            cpuReader = new CpuTemperatureReader();
-            hs = cpuReader.GetTemperaturesInCelsius();
-            string message = String.Format("CPU Package:{0}℃ Min:{1}℃ Max:{2}℃ CPU Speed:{3}GHz Memory Load:{4}%",
-                                hs.temperature, hs.temperature_min, hs.temperature_max, 
-                                hs.cpu_clock.ToString("f2"), hs.mem_load);
-
-            while (!client.IsConnetced())
-            {
-                
-            }
-            client.SendData("message: "+message + "\r\n");
-            cpuReader.Dispose();
             Console.ReadKey();
-
         }
 
-        
+        private static void CurrentDomain_ProcessExit(object sender, EventArgs e)
+        {
+            Console.WriteLine("进程退出事件");
+            CloseCpuReader();
+        }
+
+        private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        {
+            Console.WriteLine("捕获Ctrl+C事件");
+            Console.ReadKey();
+        }
+
+        public delegate bool ControlCtrlDelegate(int CtrlType);
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+        private static extern bool SetConsoleCtrlHandler(ControlCtrlDelegate HandlerRoutine, bool Add);
+        private static ControlCtrlDelegate cancelHandler = new ControlCtrlDelegate(HandlerRoutine);
+
+        public static bool HandlerRoutine(int CtrlType)
+        {
+            switch (CtrlType)
+            {
+                case 0:
+                    Console.WriteLine("0工具被强制关闭"); //Ctrl+C关闭
+                    CloseCpuReader();
+                    break;
+                case 2:
+                    Console.WriteLine("2工具被强制关闭");//按控制台关闭按钮关闭
+                    CloseCpuReader();
+                    break;
+            }
+            Console.ReadKey();
+            return false;
+        }
+
+        private static void CloseCpuReader()
+        {
+            try
+            {
+                if (client != null)
+                {
+                    client.CloseCpuReader();
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            
+        }
     }
 }

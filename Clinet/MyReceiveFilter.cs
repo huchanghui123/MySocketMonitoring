@@ -1,4 +1,5 @@
 ﻿using SuperSocket.ProtoBase;
+using System;
 using System.Text;
 
 namespace Clinet

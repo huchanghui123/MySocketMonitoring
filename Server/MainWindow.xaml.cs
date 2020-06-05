@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -31,6 +32,7 @@ namespace Server
 
         private void InitButton()
         {
+            //将所有按钮全部放入集合管理
             btnList = new List<Button>();
             foreach (UIElement element in this.GridBtn.Children)
             {
@@ -52,11 +54,15 @@ namespace Server
             var session = appServer.GetSessionByID(sb.sessionid);
             Console.WriteLine("Click--------------"+ (session.RemoteEndPoint as IPEndPoint).Address+"-----"
                 + (session.RemoteEndPoint as IPEndPoint).Port);
-            var info = String.Format("Click-----name:{0} ip:{1} port:{2}", sb.name,
+            var info = String.Format("name: {0} ip: {1} port: {2}", sb.name,
                 (session.RemoteEndPoint as IPEndPoint).Address,
                 (session.RemoteEndPoint as IPEndPoint).Port);
             clinet_name.Text = info;
             clinet_info.Text = "SessionID:"+session.SessionID;
+
+            //通知客户端发送CPU信息
+            var msg = "GETCPU";
+            session.Send(msg);
         }
 
         private void StartServer()
@@ -81,7 +87,15 @@ namespace Server
 
         private void NewRequestReceived(MySession session, StringRequestInfo requestInfo)
         {
-            Console.WriteLine("NewRequestReceived:" + requestInfo.Key + "----" + requestInfo.Body);
+            switch (requestInfo.Key.ToUpper())
+            {
+                case ("CPU"):
+                    UpdateClientCpuInfo(requestInfo.Body);
+                    break;
+                default:
+                    Console.WriteLine("NewRequestReceived:" + requestInfo.Key + "----" + requestInfo.Body);
+                    break;
+            }
         }
 
         private void NewSessionConnected(MySession session)
@@ -89,9 +103,9 @@ namespace Server
             IPAddress clientIp = (session.RemoteEndPoint as IPEndPoint).Address;
             int clientPort = (session.RemoteEndPoint as IPEndPoint).Port;
 
-            String message = String.Format("Welcome to SuperSocket Telnet Server!! client IP:{0} Port:{1} ID:{2}###",
+            String message = String.Format("Welcome to SuperSocket Telnet Server!! client IP:{0} Port:{1} ID:{2}",
                 clientIp, clientPort, session.SessionID);
-            Console.WriteLine(message);
+            //Console.WriteLine(message);
             session.Send(message);
 
             UpdateSeesionList(clientConn, session, "Connected");
@@ -105,7 +119,7 @@ namespace Server
             IPAddress clientIp = (session.RemoteEndPoint as IPEndPoint).Address;
             int clientPort = (session.RemoteEndPoint as IPEndPoint).Port;
 
-            String message = String.Format("Client:{0} {1} session:{2} is closed for {3} connect number:{4}",
+            String message = String.Format("Client: {0} {1} session: {2} is closed for {3} connect number: {4}",
                 clientIp, clientPort, session.SessionID, value, clientConn);
             Console.WriteLine(message);
 
@@ -141,7 +155,7 @@ namespace Server
             else if (status.Equals("Closed"))
             {
                 var sb = sessionList.Find((SessionButton s) => s.sessionid.Equals(session.SessionID));
-                Console.WriteLine("name:{0} id:{1} port:{2} seesionId:{3}", sb.name, sb.index,
+                Console.WriteLine("name:{0} id: {1} port: {2} seesionId: {3}", sb.name, sb.index,
                     (session.RemoteEndPoint as IPEndPoint).Port, session.SessionID);
                 disconnectList.Add(sb.index);
                 sessionList.Remove(sb);
@@ -154,7 +168,7 @@ namespace Server
             disconnectList.Sort();
             foreach (int i in disconnectList)
             {
-                Console.WriteLine("foreach disconnectList:" + i);
+                Console.WriteLine("foreach disconnectList: " + i);
             }
         }
 
@@ -165,10 +179,20 @@ namespace Server
             this.Dispatcher.Invoke(new Action(() =>
             {
                 connect_num.Content = "当前连接数：" + conn;
-                clinet_name.Text = String.Format("Client Ip:{0} Port:{1} Status:{2}", ip, port, status);
-                clinet_info.Text = String.Format("Session Id:{0}", session.SessionID);
+                clinet_name.Text = String.Format("Client Ip: {0} Port: {1} Status: {2}", ip, port, status);
+                clinet_info.Text = String.Format("Session Id: {0}", session.SessionID);
             }));
             Console.WriteLine("UpdateConnectNumber..............." + conn);
+        }
+
+        private void UpdateClientCpuInfo(string info)
+        {
+            this.Dispatcher.Invoke(new Action(() =>
+            {
+                var msg = Encoding.GetEncoding("GB2312").GetString(Encoding.ASCII.GetBytes(info));
+                Console.WriteLine(msg);
+                clinet_cpu.Text = String.Format("{0}", msg);
+            }));
         }
 
         private void AppClose(object sender, EventArgs e)

@@ -27,5 +27,12 @@ namespace Server
         {
             base.OnSessionStarted();
         }
+
+        public override void Send(string message)
+        {
+            var msg = message + "###";
+            Console.WriteLine("Server Send .....");
+            base.Send(msg);
+        }
     }
 }

@@ -33,10 +33,12 @@ namespace Clinet
             foreach (var hardware in _computer.Hardware)
             {
                 hardware.Update(); //use hardware.Name to get CPU model
+                //遍历CPU传感器
                 if (hardware.HardwareType == HardwareType.CPU)
                 {
                     foreach (var sensor in hardware.Sensors)
                     {
+                        //温度
                         if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue)
                         {
                             Console.WriteLine("{0}, Value={1}, Min Value={2}, Max Value={3}",
@@ -48,6 +50,7 @@ namespace Clinet
                                 temperature_max = Convert.ToInt32(sensor.Max);
                             }
                         }
+                        //时钟
                         if (sensor.SensorType == SensorType.Clock && sensor.Value.HasValue)
                         {
                             Console.WriteLine("{0}, Value={1}, Min Value={2}, Max Value={3}",
@@ -60,6 +63,7 @@ namespace Clinet
                         }
                     }
                 }
+                //遍历内存
                 if (hardware.HardwareType == HardwareType.RAM)
                 {
                     foreach (var sensor in hardware.Sensors)
