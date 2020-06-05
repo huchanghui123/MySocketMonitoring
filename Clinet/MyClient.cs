@@ -12,7 +12,7 @@ namespace Clinet
         string endFilter = "###";
         string ip;
         int port;
-        public string data { get; set; } = "hello this is super client\r\n";
+        bool cycleSend = false;
         CpuTemperatureReader cpuReader;
         HardwareSensors hs;
 
@@ -27,9 +27,16 @@ namespace Clinet
                 Console.WriteLine("resposen:" + request.Body);
                 if (request.Body.ToUpper().IndexOf("GETCPU") > -1)
                 {
-                    var message = "CPU " + GetCpuTemperature() + "\r\n";
-                    client.Send(Encoding.ASCII.GetBytes(message));
+                    //var message = "CPU " + GetCpuTemperature() + "\r\n";
+                    //client.Send(Encoding.ASCII.GetBytes(message));
                     //cpuReader.Dispose();
+                    if (!cycleSend) {
+                        StartSend();
+                    }
+                }
+                else if (request.Body.ToUpper().IndexOf("STOPSENDING") > -1)
+                {
+                    cycleSend = false;
                 }
             });
 
@@ -42,22 +49,38 @@ namespace Clinet
         {
             this.ip = ip;
             this.port = port;
+            var data = "hello this is super client\r\n";
             var connected = await client.ConnectAsync(new IPEndPoint(IPAddress.Parse(ip), port));
             if (connected)
             {
                 client.Send(Encoding.ASCII.GetBytes(data));
-
-
             }
         }
-        //发送数据到服务器
-        public void SendData(String message)
+
+        public void StartSend()
         {
-            if (client.IsConnected)
+            cycleSend = true;
+            System.Threading.Thread _thread = new System.Threading.Thread(SendData);
+            _thread.IsBackground = true;
+            _thread.Start();
+        }
+
+        //发送数据到服务器
+        public void SendData()
+        {
+            while (cycleSend)
             {
-                client.Send(Encoding.ASCII.GetBytes(message));
+                if (!client.IsConnected)
+                {
+                    ConnectToServer(ip, port);
+                }
+                else
+                {
+                    var message = "CPU " + GetCpuTemperature() + "\r\n";
+                    client.Send(Encoding.ASCII.GetBytes(message));
+                }
+                System.Threading.Thread.Sleep(2000);
             }
-            
         }
 
         public bool IsConnetced()

@@ -21,6 +21,7 @@ namespace Server
         private List<int> disconnectList = new List<int>();
         private List<SessionButton> sessionList = new List<SessionButton>();
         private SessionButton sb = null;
+        private string privSessionId = String.Empty;
         MyServer appServer;
 
         public MainWindow()
@@ -48,9 +49,18 @@ namespace Server
 
         private void BtnClick(object sender, RoutedEventArgs e)
         {
+            //通知上个客户端停止发送
+            if (!string.IsNullOrEmpty(privSessionId))
+            {
+                var se = appServer.GetSessionByID(privSessionId);
+                var str = "STOPSENDING";
+                se.Send(str);
+            }
+
             Button btn = (Button)sender;
             Console.WriteLine("Button_Click name:" + btn.Name);
             var sb = sessionList.Find((SessionButton s) => s.name.Equals(btn.Name));
+            privSessionId = sb.sessionid;
             var session = appServer.GetSessionByID(sb.sessionid);
             Console.WriteLine("Click--------------"+ (session.RemoteEndPoint as IPEndPoint).Address+"-----"
                 + (session.RemoteEndPoint as IPEndPoint).Port);
