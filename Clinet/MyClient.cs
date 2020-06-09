@@ -25,15 +25,14 @@ namespace Clinet
             client = new EasyClient();
             client.Initialize(new MyReceiveFilter(endFilter), (request) => {
                 Console.WriteLine("resposen:" + request.Body);
+                //收到服务器的发送CPU状态通知
                 if (request.Body.ToUpper().IndexOf("GETCPU") > -1)
                 {
-                    //var message = "CPU " + GetCpuTemperature() + "\r\n";
-                    //client.Send(Encoding.ASCII.GetBytes(message));
-                    //cpuReader.Dispose();
                     if (!cycleSend) {
                         StartSend();
                     }
                 }
+                //收到服务器的终止发送通知
                 else if (request.Body.ToUpper().IndexOf("STOPSENDING") > -1)
                 {
                     cycleSend = false;

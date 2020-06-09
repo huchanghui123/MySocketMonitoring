@@ -22,6 +22,8 @@ namespace Server
         private List<SessionButton> sessionList = new List<SessionButton>();
         private SessionButton sb = null;
         private string privSessionId = String.Empty;
+        private string privButton = String.Empty;
+        private bool sendflag = false;
         MyServer appServer;
 
         public MainWindow()
@@ -53,14 +55,26 @@ namespace Server
             if (!string.IsNullOrEmpty(privSessionId))
             {
                 var se = appServer.GetSessionByID(privSessionId);
-                var str = "STOPSENDING";
-                se.Send(str);
+                if (se != null)
+                {
+                    var str = "STOPSENDING";
+                    se.Send(str);
+                }
+                Button privBtn = (Button)FindName(privButton);
+                privBtn.Content = "Pause";
             }
 
             Button btn = (Button)sender;
-            Console.WriteLine("Button_Click name:" + btn.Name);
+            Console.WriteLine("Button_Click name:" + btn.Name + " sendflag:"+ sendflag);
             var sb = sessionList.Find((SessionButton s) => s.name.Equals(btn.Name));
+            //如果连续点击同个按钮就暂停发送
+            if (sb.sessionid == privSessionId && sendflag)
+            {
+                sendflag = false;
+                return;
+            }
             privSessionId = sb.sessionid;
+            privButton = btn.Name;
             var session = appServer.GetSessionByID(sb.sessionid);
             Console.WriteLine("Click--------------"+ (session.RemoteEndPoint as IPEndPoint).Address+"-----"
                 + (session.RemoteEndPoint as IPEndPoint).Port);
@@ -73,6 +87,8 @@ namespace Server
             //通知客户端发送CPU信息
             var msg = "GETCPU";
             session.Send(msg);
+            sendflag = true;
+            btn.Content = "Receive";
         }
 
         private void StartServer()
@@ -141,8 +157,10 @@ namespace Server
         {
             Console.WriteLine("UpdateSeesionList.......index:" + index + " status:"+ status);
             sb = new SessionButton();
+            //有新的会话
             if (status.Equals("Connected"))
             {
+                //如果之前有断开会话，优先使用这些坐标
                 if (disconnectList.Count > 0)
                 {
                     var i = disconnectList.First();
@@ -160,15 +178,20 @@ namespace Server
                     btnList[sb.index].IsEnabled = true;
                 }));
                 sb.sessionid = session.SessionID;
+                //将新的会话加入会话集合
                 sessionList.Add(sb);
             }
+            //有会话断开
             else if (status.Equals("Closed"))
             {
                 var sb = sessionList.Find((SessionButton s) => s.sessionid.Equals(session.SessionID));
                 Console.WriteLine("name:{0} id: {1} port: {2} seesionId: {3}", sb.name, sb.index,
                     (session.RemoteEndPoint as IPEndPoint).Port, session.SessionID);
+                //找到断开的会话坐标加入集合
                 disconnectList.Add(sb.index);
+                //从会话集合中删除断开的会话
                 sessionList.Remove(sb);
+                //更新按钮状态
                 this.Dispatcher.Invoke(new Action(() =>
                 {
                     btnList[sb.index].Background = Brushes.White;
@@ -176,10 +199,10 @@ namespace Server
                 }));
             }
             disconnectList.Sort();
-            foreach (int i in disconnectList)
-            {
-                Console.WriteLine("foreach disconnectList: " + i);
-            }
+            //foreach (int i in disconnectList)
+            //{
+            //    Console.WriteLine("foreach disconnectList: " + i);
+            //}
         }
 
         public void UpdateConnect(int conn, MySession session, string status)
